@@ -1,0 +1,19 @@
+---
+applications:
+- name: tweetweb
+  memory: 256M
+  instances: 1
+  path: ./tweetweb
+  host: tweetie
+  buildpack: python_buildpack
+  command: python tweetweb.py
+
+- name: tweetmon
+  memory: 256M
+  no-route: true
+  instances: 1
+  path: ./tweetmon
+  health-check-type: none
+  buildpack: python_buildpack
+  command: python tweetmon.py
+

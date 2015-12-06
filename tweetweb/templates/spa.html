@@ -1,0 +1,356 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Live Twitter Sentiment Analysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.css') }}" type="text/css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='local.css') }}" type="text/css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Unica+One" type="text/css">
+    <script src="{{ url_for('static', filename='jquery-1.11.3.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='highstock.js') }}"></script>
+    <script src="{{ url_for('static', filename='highcharts-more.js') }}"></script>
+    <script src="{{ url_for('static', filename='technical-indicators.src.js') }}"></script>
+    <script type="text/javascript" charset="utf-8">
+
+        var pauseflag = true;
+
+        $(function() {
+            $(document).ready(function() {
+                var keyword;
+                $('#btnpause').on('click', function() {
+                    if (pauseflag == false) {
+                        $(this).button('resume');
+                        pauseflag = true;
+                    }
+                    else {
+                        $(this).button('reset');
+                        pauseflag = false;
+                    }
+                });
+
+                $('#btnrun').on('click', function() {
+                    runningSentiment = 0 // Reset running sentiment
+                    keyword = $("#keyword-value").val();
+                    $(this).button('loading');
+                    $.ajax({
+                        contentType: 'application/json',
+                        url: keywordurl,
+                        data: JSON.stringify({
+                            keyword: keyword
+                        }),
+                        dataType: "json",
+                        type: "POST",
+                        success: function (data) {
+                            console.log("Server data: %o", data);
+                            pauseflag = false;
+                        },
+                        error: function (xhr, status, errorThrown) {
+                            alert("Sorry, there is a problem!");
+                            console.log("Error: " + errorThrown);
+                            console.log("Status: " + status);
+                            console.dir(xhr);
+                        }
+                    });
+                });
+                var dataurl = '/d/{{ myuuid }}'
+                var keywordurl = '/k/{{ myuuid }}'
+                var initTime = new Date().getTime();
+
+                Highcharts.setOptions({
+                    global : {
+                        useUTC : false
+                    }
+                });
+
+                var chartOptions = {
+                    chart: {
+                        type: 'areaspline',
+                        renderTo: 'container',
+                        animation: Highcharts.svg,
+                        marginRight: 10,
+                        style: {
+                            fontFamily: "'Unica One', sans-serif"
+                        },
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    rangeSelector : {
+                        buttons : [{
+                            type : 'minute',
+                            count : 1,
+                            text : '1M'
+                        }, {
+                            type : 'minute',
+                            count : 15,
+                            text : '15M'
+                        }, {
+                            type : 'hour',
+                            count : 1,
+                            text : '1H'
+                        }, {
+                            type : 'all',
+                            text : 'All'
+                        }],
+                        selected : 0,
+                        inputEnabled : false
+                    },
+                    plotOptions: {
+                        series: {
+                            marker: {
+                                enabled: false
+                            },
+                        }
+                    },
+                    title: {
+                        text: 'Sentiment Timeline',
+                        style: {
+                            textTransform: 'uppercase',
+                            fontSize: '20px'
+                        }
+                    },
+                    exporting: {
+                        enabled: false
+                    },
+                    tooltip: {
+                        formatter: function() {
+                            return '<b>' + this.series.name + '</b><br/>' +
+                                            Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', this.x) + '<br/>' +
+                                            Highcharts.numberFormat(this.y, 2) + '<br/>';
+                        }
+                    },
+                    legend: {
+                        enabled: true
+                    },
+                    series: [
+                        {
+                            color: "#ffffff",
+                            fillColor: 'rgba(50,255,50,0.4)', // red
+                            turboThreshold: 0,
+                            negativeFillColor: 'rgba(255,50,50,0.4)', // green
+                            showInLegend: false,
+                            id: 'Sentiment',
+                            data: (function () {
+                                // generate an array of random data
+                                var data = [],
+                                        time = initTime,
+                                        i;
+
+                                for (i = -3600; i <= 0; i += 1) {
+                                    data.push({
+                                        x: time + i * 1000,
+                                        y: null
+                                    });
+                                }
+                                return data;
+                            })()
+                        }, {
+                            name: '30-point EMA',
+                            linkedTo: 'Sentiment',
+                            showInLegend: true,
+                            type: 'trendline',
+                            algorithm: 'EMA',
+                            periods: 30,
+                            color: 'gray',
+                            dashStyle: 'shortdot'
+                        }
+                    ]
+                };
+
+                var meterOptions = {
+                    chart: {
+                        type: 'gauge',
+                        renderTo: 'meter',
+                        marginRight: 10,
+                        style: {
+                            fontFamily: "'Unica One', sans-serif"
+                        },
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    title: {
+                        text: 'Sentiment Meter',
+                        style: {
+                            textTransform: 'uppercase',
+                            fontSize: '20px'
+                        }
+                    },
+
+                    pane: [{
+                        startAngle: -135,
+                        endAngle: 135,
+                        background: null,
+                        center: ['50%', '50%']
+                    }],
+
+                    tooltip: {
+                        enabled: false
+                    },
+
+                    yAxis: [{
+                        min: -1,
+                        max: 1,
+                        minorTickPosition: 'outside',
+                        tickPosition: 'outside',
+                        labels: {
+                            rotation: 'auto',
+                            distance: 20
+                        },
+                        plotBands: [{
+                            from: -1,
+                            to: 0,
+                            color: '#C02316',
+                            innerRadius: '100%',
+                            outerRadius: '105%'
+                        }, {
+                            from: 0,
+                            to: 1,
+                            color: '#00FF00',
+                            innerRadius: '100%',
+                            outerRadius: '105%'
+                        }],
+                    }],
+
+                    plotOptions: {
+                        gauge: {
+                            dataLabels: {
+                                enabled: false
+                            },
+                            dial: {
+                                radius: '90%'
+                            }
+                        }
+                    },
+                    series: [{
+                        name: 'Sentiment',
+                        data: [0],
+                        yAxis: 0
+                    }]
+                };
+
+                var liveMeter = new Highcharts.Chart(meterOptions);
+
+                var liveChart = new Highcharts.StockChart(chartOptions);
+
+                // Keep list of last 20 sentiments
+
+                var runningSentiment = 0;
+
+                // Running total sentiment series
+                var series = liveChart.series[0];
+
+//                var urlRegex = /(https?:\/\/[^\s]+)/g;
+//                function urlify(text) {
+//                    return text.replace(urlRegex, function(url) {
+//                        return '<a href="' + url + '" target="_blank">' + url + '</a>';
+//                    })
+//                    // or alternatively
+//                    // return text.replace(urlRegex, '<a href="$1">$1</a>')
+//                }
+                // Regex to match URLs
+
+                // Current time
+                var ctime = new Date().getTime();
+                // Start series at zero
+                series.addPoint([ctime, 0], false, false);
+
+                setInterval(function() {
+                    if (pauseflag) {
+                        return;
+                    }
+                    $.getJSON(dataurl, function(data) {
+                        // If nothing received set y to last y value
+                        //                                        if (data.length < 1) {
+                        //                                            var x = new Date().getTime();
+                        //                                            maSeries.addPoint([x, maLastY], true, true);
+                        //                                            series.addPoint([x, sLastY], true, true);
+                        //                                            pSeries.addPoint([x, pLastY], true, true);
+                        //                                            nSeries.addPoint([x, nLastY], true, true)
+                        //                                            return;
+                        //                                        }
+                        //var avgSentiment = data.reduce(function(a, b) { return a.sentiment + b.sentiment; }, 0) /  data.length;
+                        if (data.length < 1 || !("sentiment" in data[0])) {
+//                            var x = new Date().getTime();
+//                            console.log("Here and pSeries.y = " + pSeries.y + " and nSeries.y = " + nSeries.y)
+//                            if (previousRunningSentiment >=0) {
+//                                pSeries.addPoint([x, pSeriesLastY], false, false);
+//                            }
+//                            else {
+//                                nSeries.addPoint([x, nSeriesLastY], false, false);
+//                            }
+//                            liveChart.isDirty = true;
+//                            liveChart.redraw();
+                            return;
+                        }
+
+                        var sentimentSum = 0;
+                        for (i = 0; i < data.length; i++) {
+                            sentimentSum += data[i].sentiment;
+                            var slabel;
+                            if (data[i].sentiment > 0) {
+                                slabel = 'positive';
+                            }
+                            else if (data[i].sentiment < 0) {
+                                slabel = 'negative';
+                            }
+                            else {
+                                slabel = 'neutral'
+                            }
+
+                            var message = data[i].message;
+
+                            $("#tweetlist").prepend("<li class='new-item " + slabel + "'>" + "<a href=https://twitter.com/" + data[i]["screen_name"] + " target='_blank'>" + data[i]["screen_name"] + "</a> " + message + "</li>");
+                            if ($("#tweetlist li").length > 100) {
+                                $('#tweetlist li:last').remove();
+                            }
+                        }
+                        var pulledSentiment = sentimentSum;
+                        var avgSentiment = pulledSentiment / data.length;
+
+                        runningSentiment += pulledSentiment;
+
+                        var x = new Date().getTime();
+                        series.addPoint([x, runningSentiment], true, true);
+
+                        // Calculate MA series sentiment
+                        //
+
+                        console.log("Cur: " + runningSentiment);
+                        liveMeter.series[0].points[0].update(avgSentiment, true);
+
+                        // Set running flag
+                        $("#btnrun").button('starting');
+                    });
+                }, 1000);
+            });
+        });
+
+    </script>
+</head>
+<body>
+    <div class="row row-centered">
+        <div class="col-md-1" id="container" style="width:70%; height:100%;"></div>
+        <div class="col-md-1" id="meter" style="width:30%; height:100%;"></div>
+    </div>
+    <div class="row row-centered">
+        <div class="col-md-1" style="width:100%; height:100%;">
+            <form class="form-inline">
+                <div class="form-group">
+                <label class="sr-only" for="keyword-value">Keyword</label>
+                    <input type="text" class="form-control" id="keyword-value" placeholder="Enter keyword..">
+                    <button type="button" id="btnrun" data-starting-text="Start" data-loading-text="Initializing..." data-stopping-text="Stop" class="btn btn-primary" autocomplete="off">Start</button>
+                    <button type="button" id="btnpause" class="btn btn-primary" data-resume-text="Resume" autocomplete="off">Pause</button>
+                    <span class="badge">@{{twitter_login}}</span>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-1" style="width:100%; height:100%;">
+            <ul id="tweetlist">
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

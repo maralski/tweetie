@@ -1,0 +1,62 @@
+.row-centered {
+    text-align:center;
+}
+
+.new-item {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-0px);
+  animation: 
+    openSpace 0.2s ease forwards,
+    moveIn 0.3s 0.2s ease forwards;
+}
+
+@keyframes openSpace {
+  to { 
+    max-height: 50px;
+  }
+}
+
+@keyframes moveIn {
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#tweetlist li {
+    list-style-type: none;
+}
+
+.negative {
+  color: red;
+}
+
+.positive {
+  color: green;
+}
+
+.neutral {
+  color: black;
+}
+
+/* unvisited link */
+a:link {
+    color: blue;
+}
+
+/* visited link */
+a:visited {
+    color: green;
+}
+
+/* mouse over link */
+a:hover {
+    color: hotpink;
+}
+
+/* selected link */
+a:active {
+    color: blueviolet;
+}
+

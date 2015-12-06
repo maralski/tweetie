@@ -1,0 +1,42 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+    <title>Live Twitter Sentiment Analysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='local.css') }}" type="text/css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.css') }}" type="text/css">
+    <script src="{{ url_for('static', filename='jquery-1.11.3.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+    <script type="text/javascript" charset="utf-8">
+        $(function() {
+            $(document).ready(function () {
+                $("#gobtn").click(function() {
+                    window.location.replace("/r");
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="alert alert-info row-centered" role="alert">
+        <div class="row row-centered">
+            <div class="col-md-1" style="width:50%; height:100%; align-content: center;">
+                <img src="{{ url_for('static', filename='tweetie.gif') }}" class="img-responsive" alt="Image">
+            </div>
+            <div class="col-md-1" style="width:50%; height:100%; align-content: center;">
+                <h1>
+                    <strong>WELCOME to TWEETiE!</strong>
+                </h1>
+                <br>
+                <h2>
+                    <strong>Live</strong> Sentiment Analysis for Twitter Feeds
+                </h2>
+                <br>
+                <h3>
+                    This application requires authentication with your twitter account.. If you are OK with that click on GO to login...
+                </h3>
+                <button type="button" id="gobtn" class="btn btn-primary">GO</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
